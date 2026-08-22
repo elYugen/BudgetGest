@@ -15,6 +15,7 @@ import { GoalForm } from '../components/goals/GoalForm';
 import { GoalRow } from '../components/goals/GoalRow';
 import { formatMoney } from '../lib/format';
 import { accountValue } from '../lib/accountValue';
+import { resolveAccountIcon } from '../lib/accountIcons';
 
 export function Accounts() {
   const accounts = useLiveQuery(() => db.accounts.toArray(), []) ?? [];
@@ -117,7 +118,7 @@ export function Accounts() {
         {banking.map((a) => (
           <BentoCard key={a.id} span="full" noPad className="p-4">
             <div className="flex items-center gap-3">
-              <IconBadge emoji={a.icon} color={a.color} />
+              <IconBadge emoji={resolveAccountIcon(a)} color={a.color} />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-ink truncate text-left">{a.name}</p>
                 <p className="text-xs text-muted text-left">{ACCOUNT_TYPE_LABELS[a.type]}</p>
@@ -149,7 +150,7 @@ export function Accounts() {
           return (
             <BentoCard key={a.id} span="full" noPad className="p-4">
               <div className="flex items-center gap-3 mb-2">
-                <IconBadge emoji={a.icon} color={a.color} />
+                <IconBadge emoji={resolveAccountIcon(a)} color={a.color} />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-ink truncate text-left">{a.name}</p>
                   <p className="text-xs text-muted text-left">

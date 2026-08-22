@@ -1,3 +1,5 @@
+import type { Account } from '../db/types';
+import { ACCOUNT_TYPE_ICONS } from '../db/types';
 import {
   Wallet,
   CreditCard,
@@ -62,3 +64,10 @@ export const ACCOUNT_ICONS: Record<string, LucideIcon> = {
 };
 
 export const ACCOUNT_ICON_CHOICES = Object.keys(ACCOUNT_ICONS);
+
+// Accounts created before the icon-library switch have an emoji character stored in
+// `icon` instead of a known key — fall back to the type's default vector icon instead
+// of rendering that raw emoji.
+export function resolveAccountIcon(account: Pick<Account, 'icon' | 'type'>): string {
+  return ACCOUNT_ICONS[account.icon] ? account.icon : ACCOUNT_TYPE_ICONS[account.type];
+}

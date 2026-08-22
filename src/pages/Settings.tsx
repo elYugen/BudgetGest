@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Sun, Moon, Monitor, Download, Wallet, ArrowLeftRight, CalendarClock, LineChart, HardDrive } from 'lucide-react';
+import { Sun, Moon, Monitor, Download, Wallet, ArrowLeftRight, CalendarClock, LineChart, HardDrive, RefreshCw } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { BentoCard, CardLabel } from '../components/ui/BentoCard';
 import { SegmentedControl, Button } from '../components/ui/Form';
@@ -44,6 +44,17 @@ export function Settings() {
           {theme === 'system' ? <Monitor size={13} /> : theme === 'dark' ? <Moon size={13} /> : <Sun size={13} />}
           {theme === 'system' ? "Suit le réglage de votre appareil" : theme === 'dark' ? 'Thème sombre actif' : 'Thème clair actif'}
         </p>
+      </BentoCard>
+
+      <BentoCard span="full" className="mb-4">
+        <CardLabel icon={<RefreshCw size={13} />}>Application</CardLabel>
+        <p className="text-xs text-muted mb-3">
+          En PWA, l'actualisation habituelle du navigateur n'est pas toujours disponible. Utilisez ce bouton si
+          l'app semble figée ou pour appliquer une mise à jour.
+        </p>
+        <Button variant="ghost" className="w-full" onClick={() => window.location.reload()}>
+          <RefreshCw size={16} /> Recharger l'app
+        </Button>
       </BentoCard>
 
       <BentoCard span="full" className="mb-4">

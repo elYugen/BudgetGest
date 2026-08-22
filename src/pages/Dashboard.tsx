@@ -12,6 +12,7 @@ import { TransactionForm } from '../components/transactions/TransactionForm';
 import { GoalRow } from '../components/goals/GoalRow';
 import { formatMoney, currentPeriod, formatDateShort } from '../lib/format';
 import { accountValue } from '../lib/accountValue';
+import { resolveAccountIcon } from '../lib/accountIcons';
 
 const BUCKET_COLORS = { bank: '#16A34A', cash: '#0EA5E9', securities: '#8B5CF6' };
 
@@ -117,21 +118,42 @@ export function Dashboard() {
           <p className="text-xl font-bold text-red-500 dark:text-red-400">{formatMoney(monthExpense)}</p>
         </BentoCard>
 
-        <BentoCard span="full">
-          <CardLabel icon={<TrendingUp size={13} className="text-primary-600" />}>Solde du mois</CardLabel>
-          <div className="flex items-center justify-between">
-            <p className={`text-2xl font-bold ${monthBalance >= 0 ? 'text-primary-700' : 'text-red-500 dark:text-red-400'}`}>
-              {monthBalance >= 0 ? '+' : ''}
-              {formatMoney(monthBalance)}
-            </p>
-            <div className="flex-1 max-w-[55%] h-2.5 rounded-full bg-canvas overflow-hidden ml-4">
-              <div
-                className="h-full bg-primary-500 rounded-full transition-all"
-                style={{ width: `${monthIncome > 0 ? Math.min(100, (monthExpense / monthIncome) * 100) : 0}%` }}
-              />
+        {goals.length > 0 ? (
+          <BentoCard span="full" noPad>
+            <div className="p-5 pb-1">
+              <CardLabel icon={<Target size={13} className="text-primary-600" />}>Objectifs d'épargne</CardLabel>
             </div>
-          </div>
-        </BentoCard>
+            <div className="divide-y divide-line">
+              {goals.slice(0, 3).map((g) => {
+                const account = accounts.find((a) => a.id === g.accountId);
+                return (
+                  <GoalRow
+                    key={g.id}
+                    goal={g}
+                    current={account ? accountValue(account, securities) : 0}
+                    accountName={account?.name ?? 'Compte supprimé'}
+                  />
+                );
+              })}
+            </div>
+          </BentoCard>
+        ) : (
+          <BentoCard span="full">
+            <CardLabel icon={<TrendingUp size={13} className="text-primary-600" />}>Solde du mois</CardLabel>
+            <div className="flex items-center justify-between">
+              <p className={`text-2xl font-bold ${monthBalance >= 0 ? 'text-primary-700' : 'text-red-500 dark:text-red-400'}`}>
+                {monthBalance >= 0 ? '+' : ''}
+                {formatMoney(monthBalance)}
+              </p>
+              <div className="flex-1 max-w-[55%] h-2.5 rounded-full bg-canvas overflow-hidden ml-4">
+                <div
+                  className="h-full bg-primary-500 rounded-full transition-all"
+                  style={{ width: `${monthIncome > 0 ? Math.min(100, (monthExpense / monthIncome) * 100) : 0}%` }}
+                />
+              </div>
+            </div>
+          </BentoCard>
+        )}
 
         <BentoCard span="full">
           <CardLabel icon={<Sparkles size={13} className="text-primary-600" />}>Prochaines échéances</CardLabel>
@@ -159,22 +181,19 @@ export function Dashboard() {
         </BentoCard>
 
         {goals.length > 0 && (
-          <BentoCard span="full" noPad>
-            <div className="p-5 pb-1">
-              <CardLabel icon={<Target size={13} className="text-primary-600" />}>Objectifs d'épargne</CardLabel>
-            </div>
-            <div className="divide-y divide-line">
-              {goals.slice(0, 3).map((g) => {
-                const account = accounts.find((a) => a.id === g.accountId);
-                return (
-                  <GoalRow
-                    key={g.id}
-                    goal={g}
-                    current={account ? accountValue(account, securities) : 0}
-                    accountName={account?.name ?? 'Compte supprimé'}
-                  />
-                );
-              })}
+          <BentoCard span="full">
+            <CardLabel icon={<TrendingUp size={13} className="text-primary-600" />}>Solde du mois</CardLabel>
+            <div className="flex items-center justify-between">
+              <p className={`text-2xl font-bold ${monthBalance >= 0 ? 'text-primary-700' : 'text-red-500 dark:text-red-400'}`}>
+                {monthBalance >= 0 ? '+' : ''}
+                {formatMoney(monthBalance)}
+              </p>
+              <div className="flex-1 max-w-[55%] h-2.5 rounded-full bg-canvas overflow-hidden ml-4">
+                <div
+                  className="h-full bg-primary-500 rounded-full transition-all"
+                  style={{ width: `${monthIncome > 0 ? Math.min(100, (monthExpense / monthIncome) * 100) : 0}%` }}
+                />
+              </div>
             </div>
           </BentoCard>
         )}
@@ -185,7 +204,7 @@ export function Dashboard() {
             <div className="flex flex-col gap-2.5 mt-1">
               {accounts.map((a) => (
                 <div key={a.id} className="flex items-center gap-3">
-                  <IconBadge emoji={a.icon} color={a.color} size={32} />
+                  <IconBadge emoji={resolveAccountIcon(a)} color={a.color} size={32} />
                   <p className="flex-1 text-sm font-medium text-left truncate">{a.name}</p>
                   <p className="text-sm font-semibold">{formatMoney(a.balance)}</p>
                 </div>

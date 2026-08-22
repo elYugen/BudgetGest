@@ -3,7 +3,7 @@ import { db } from '../../db/db';
 import type { Account, AccountType } from '../../db/types';
 import { ACCOUNT_TYPE_COLORS, ACCOUNT_TYPE_ICONS, ACCOUNT_TYPE_LABELS } from '../../db/types';
 import { Field, Input, Button } from '../ui/Form';
-import { ACCOUNT_ICONS, ACCOUNT_ICON_CHOICES } from '../../lib/accountIcons';
+import { ACCOUNT_ICONS, ACCOUNT_ICON_CHOICES, resolveAccountIcon } from '../../lib/accountIcons';
 import { parseAmount } from '../../lib/format';
 
 const TYPES: AccountType[] = ['courant', 'livret', 'compte-titre', 'pea'];
@@ -12,7 +12,7 @@ export function AccountForm({ initial, onDone }: { initial?: Account; onDone: ()
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<AccountType>(initial?.type ?? 'courant');
   const [balance, setBalance] = useState(initial?.balance?.toString().replace('.', ',') ?? '');
-  const [icon, setIcon] = useState(initial?.icon ?? ACCOUNT_TYPE_ICONS.courant);
+  const [icon, setIcon] = useState(initial ? resolveAccountIcon(initial) : ACCOUNT_TYPE_ICONS.courant);
   const [error, setError] = useState('');
 
   const submit = async (e: FormEvent) => {
