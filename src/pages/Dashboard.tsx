@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { ArrowDownLeft, ArrowUpRight, Wallet, TrendingUp, Sparkles, Target } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Wallet, Sparkles, Target } from 'lucide-react';
 import { db } from '../db/db';
 import type { Account } from '../db/types';
 import { BentoCard, CardLabel } from '../components/ui/BentoCard';
@@ -41,7 +41,6 @@ export function Dashboard() {
   const monthTx = transactions.filter((t) => t.date.startsWith(period));
   const monthIncome = monthTx.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const monthExpense = monthTx.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-  const monthBalance = monthIncome - monthExpense;
 
   const upcoming = useMemo(() => {
     const now = new Date();
@@ -118,7 +117,7 @@ export function Dashboard() {
           <p className="text-xl font-bold text-red-500 dark:text-red-400">{formatMoney(monthExpense)}</p>
         </BentoCard>
 
-        {goals.length > 0 ? (
+        {goals.length > 0 && (
           <BentoCard span="full" noPad>
             <div className="p-5 pb-1">
               <CardLabel icon={<Target size={13} className="text-primary-600" />}>Objectifs d'épargne</CardLabel>
@@ -135,22 +134,6 @@ export function Dashboard() {
                   />
                 );
               })}
-            </div>
-          </BentoCard>
-        ) : (
-          <BentoCard span="full">
-            <CardLabel icon={<TrendingUp size={13} className="text-primary-600" />}>Solde du mois</CardLabel>
-            <div className="flex items-center justify-between">
-              <p className={`text-2xl font-bold ${monthBalance >= 0 ? 'text-primary-700' : 'text-red-500 dark:text-red-400'}`}>
-                {monthBalance >= 0 ? '+' : ''}
-                {formatMoney(monthBalance)}
-              </p>
-              <div className="flex-1 max-w-[55%] h-2.5 rounded-full bg-canvas overflow-hidden ml-4">
-                <div
-                  className="h-full bg-primary-500 rounded-full transition-all"
-                  style={{ width: `${monthIncome > 0 ? Math.min(100, (monthExpense / monthIncome) * 100) : 0}%` }}
-                />
-              </div>
             </div>
           </BentoCard>
         )}
@@ -179,24 +162,6 @@ export function Dashboard() {
             </div>
           )}
         </BentoCard>
-
-        {goals.length > 0 && (
-          <BentoCard span="full">
-            <CardLabel icon={<TrendingUp size={13} className="text-primary-600" />}>Solde du mois</CardLabel>
-            <div className="flex items-center justify-between">
-              <p className={`text-2xl font-bold ${monthBalance >= 0 ? 'text-primary-700' : 'text-red-500 dark:text-red-400'}`}>
-                {monthBalance >= 0 ? '+' : ''}
-                {formatMoney(monthBalance)}
-              </p>
-              <div className="flex-1 max-w-[55%] h-2.5 rounded-full bg-canvas overflow-hidden ml-4">
-                <div
-                  className="h-full bg-primary-500 rounded-full transition-all"
-                  style={{ width: `${monthIncome > 0 ? Math.min(100, (monthExpense / monthIncome) * 100) : 0}%` }}
-                />
-              </div>
-            </div>
-          </BentoCard>
-        )}
 
         {accounts.length > 0 && (
           <BentoCard span="full">
