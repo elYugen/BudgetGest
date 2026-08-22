@@ -68,10 +68,10 @@ export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 };
 
 export const ACCOUNT_TYPE_ICONS: Record<AccountType, string> = {
-  courant: '💳',
-  livret: '🐷',
-  'compte-titre': '📈',
-  pea: '📊',
+  courant: 'wallet',
+  livret: 'piggy-bank',
+  'compte-titre': 'line-chart',
+  pea: 'pie-chart',
 };
 
 export const ACCOUNT_TYPE_COLORS: Record<AccountType, string> = {

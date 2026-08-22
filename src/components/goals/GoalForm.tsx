@@ -81,7 +81,7 @@ export function GoalForm({
         <Select value={accountId} onChange={(e) => setAccountId(Number(e.target.value))}>
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.icon} {a.name}
+              {a.name}
             </option>
           ))}
         </Select>

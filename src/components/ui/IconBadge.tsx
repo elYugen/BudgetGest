@@ -1,4 +1,5 @@
 import { BRAND_LOGOS } from '../../lib/brandLogos';
+import { ACCOUNT_ICONS } from '../../lib/accountIcons';
 
 export function IconBadge({
   emoji,
@@ -12,6 +13,7 @@ export function IconBadge({
   size?: number;
 }) {
   const brand = logo ? BRAND_LOGOS[logo] : undefined;
+  const LucideIcon = !brand ? ACCOUNT_ICONS[emoji] : undefined;
   const bg = brand ? brand.hex : color;
 
   return (
@@ -28,6 +30,8 @@ export function IconBadge({
         <svg viewBox="0 0 24 24" width={size * 0.52} height={size * 0.52} fill={brand.hex} role="img" aria-label={brand.title}>
           <path d={brand.path} />
         </svg>
+      ) : LucideIcon ? (
+        <LucideIcon size={size * 0.52} color={color} strokeWidth={2.2} />
       ) : (
         <span style={{ filter: 'saturate(1.1)' }}>{emoji}</span>
       )}

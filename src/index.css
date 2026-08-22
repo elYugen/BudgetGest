@@ -39,15 +39,15 @@
   --color-primary-800: #8ff0b4;
   --color-primary-900: #bbf7d0;
 
-  --color-ink: #eaf4ee;
-  --color-muted: #93a69b;
-  --color-canvas: #0c1310;
-  --color-card: #151f19;
-  --color-line: #263029;
-  --color-nav: #1b2a21;
+  --color-ink: #f4f4f5;
+  --color-muted: #9a9a9e;
+  --color-canvas: #0a0a0a;
+  --color-card: #171717;
+  --color-line: #2a2a2c;
+  --color-nav: #1c1c1e;
 
-  --shadow-bento: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 28px -14px rgba(0, 0, 0, 0.6);
-  --shadow-bento-hover: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 36px -14px rgba(0, 0, 0, 0.7);
+  --shadow-bento: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 10px 28px -14px rgba(0, 0, 0, 0.7);
+  --shadow-bento-hover: 0 0 0 1px rgba(255, 255, 255, 0.09), 0 18px 36px -14px rgba(0, 0, 0, 0.8);
 
   color-scheme: dark;
 }

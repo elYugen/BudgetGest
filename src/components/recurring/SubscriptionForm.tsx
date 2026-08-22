@@ -161,7 +161,7 @@ export function SubscriptionForm({
             <option value="">Aucun</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.icon} {a.name}
+                {a.name}
               </option>
             ))}
           </Select>
