@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { db } from '../../db/db';
 import type { Account, Goal } from '../../db/types';
-import { Field, Input, Select, Button } from '../ui/Form';
+import { Field, Input, Select, Button, SegmentedControl } from '../ui/Form';
 import { EMOJI_CHOICES, COLOR_CHOICES } from '../../lib/subscriptionCatalog';
 import { parseAmount } from '../../lib/format';
 
@@ -20,6 +20,7 @@ export function GoalForm({
   const [emoji, setEmoji] = useState(initial?.emoji ?? '🎯');
   const [color, setColor] = useState(initial?.color ?? '#16A34A');
   const [deadline, setDeadline] = useState(initial?.deadline ?? '');
+  const [recurring, setRecurring] = useState<'once' | 'recurring'>(initial?.recurring ? 'recurring' : 'once');
   const [error, setError] = useState('');
 
   const submit = async (e: FormEvent) => {
@@ -44,11 +45,14 @@ export function GoalForm({
       accountId: Number(accountId),
       emoji,
       color,
-      deadline: deadline || undefined,
+      deadline: recurring === 'once' ? deadline || undefined : undefined,
+      recurring: recurring === 'recurring',
+      achieved: initial?.achieved ?? false,
+      completedPeriods: initial?.completedPeriods ?? [],
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
     if (initial?.id) {
-      await db.goals.update(initial.id, payload);
+      await db.goals.put({ ...payload, id: initial.id });
     } else {
       await db.goals.add(payload);
     }
@@ -61,21 +65,33 @@ export function GoalForm({
 
   return (
     <form onSubmit={submit}>
+      <Field label="Type d'objectif">
+        <SegmentedControl
+          value={recurring}
+          onChange={setRecurring}
+          options={[
+            { value: 'once', label: 'Ponctuel' },
+            { value: 'recurring', label: 'Récurrent (mensuel)' },
+          ]}
+        />
+      </Field>
       <Field label="Nom de l'objectif">
         <Input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          placeholder="Ex. Épargne de précaution, Investir sur mon PEA..."
+          placeholder={recurring === 'recurring' ? 'Ex. 1 ETF par mois' : 'Ex. Épargne de précaution'}
           autoFocus
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Montant cible (€)">
+        <Field label={recurring === 'recurring' ? 'Montant cible / mois (€)' : 'Montant cible (€)'}>
           <Input type="text" inputMode="decimal" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} placeholder="1 000" />
         </Field>
-        <Field label="Échéance (optionnel)">
-          <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
-        </Field>
+        {recurring === 'once' && (
+          <Field label="Échéance (optionnel)">
+            <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+          </Field>
+        )}
       </div>
       <Field label="Compte concerné">
         <Select value={accountId} onChange={(e) => setAccountId(e.target.value ? Number(e.target.value) : '')}>

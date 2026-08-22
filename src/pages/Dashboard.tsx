@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { ArrowDownLeft, ArrowUpRight, Wallet, Sparkles, Target } from 'lucide-react';
 import { db } from '../db/db';
-import type { Account } from '../db/types';
+import type { Account, Goal } from '../db/types';
 import { BentoCard, CardLabel } from '../components/ui/BentoCard';
 import { IconBadge } from '../components/ui/IconBadge';
 import { Sheet } from '../components/ui/Sheet';
@@ -56,6 +56,17 @@ export function Dashboard() {
   }, [recurringItems]);
 
   const recentTx = transactions.slice(0, 5);
+
+  const toggleGoalDone = async (goal: Goal) => {
+    if (goal.recurring) {
+      const period = currentPeriod();
+      const periods = goal.completedPeriods ?? [];
+      const updated = periods.includes(period) ? periods.filter((p) => p !== period) : [...periods, period];
+      await db.goals.update(goal.id!, { completedPeriods: updated });
+    } else {
+      await db.goals.update(goal.id!, { achieved: !goal.achieved });
+    }
+  };
 
   return (
     <div>
@@ -131,6 +142,7 @@ export function Dashboard() {
                     goal={g}
                     current={account ? accountValue(account, securities) : 0}
                     accountName={account?.name ?? 'Compte supprimé'}
+                    onToggleDone={() => toggleGoalDone(g)}
                   />
                 );
               })}

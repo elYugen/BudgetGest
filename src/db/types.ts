@@ -41,6 +41,9 @@ export interface Goal {
   emoji: string;
   color: string;
   deadline?: string;
+  recurring: boolean;
+  achieved: boolean;
+  completedPeriods: string[];
   createdAt: string;
 }
 

@@ -13,7 +13,7 @@ import { AccountForm } from '../components/accounts/AccountForm';
 import { SecurityForm } from '../components/accounts/SecurityForm';
 import { GoalForm } from '../components/goals/GoalForm';
 import { GoalRow } from '../components/goals/GoalRow';
-import { formatMoney } from '../lib/format';
+import { formatMoney, currentPeriod } from '../lib/format';
 import { accountValue } from '../lib/accountValue';
 import { resolveAccountIcon } from '../lib/accountIcons';
 
@@ -56,6 +56,17 @@ export function Accounts() {
   const deleteGoal = async (id: number) => {
     if (!confirm('Supprimer cet objectif ?')) return;
     await db.goals.delete(id);
+  };
+
+  const toggleGoalDone = async (goal: Goal) => {
+    if (goal.recurring) {
+      const period = currentPeriod();
+      const periods = goal.completedPeriods ?? [];
+      const updated = periods.includes(period) ? periods.filter((p) => p !== period) : [...periods, period];
+      await db.goals.update(goal.id!, { completedPeriods: updated });
+    } else {
+      await db.goals.update(goal.id!, { achieved: !goal.achieved });
+    }
   };
 
   return (
@@ -102,6 +113,7 @@ export function Accounts() {
                 goal={g}
                 current={account ? accountValue(account, securities) : 0}
                 accountName={account?.name ?? 'Compte supprimé'}
+                onToggleDone={() => toggleGoalDone(g)}
                 onEdit={() => setGoalSheet({ open: true, editing: g })}
                 onDelete={() => deleteGoal(g.id!)}
               />
