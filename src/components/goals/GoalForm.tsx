@@ -16,7 +16,7 @@ export function GoalForm({
 }) {
   const [label, setLabel] = useState(initial?.label ?? '');
   const [targetAmount, setTargetAmount] = useState(initial?.targetAmount?.toString().replace('.', ',') ?? '');
-  const [accountId, setAccountId] = useState<number | ''>(initial?.accountId ?? accounts[0]?.id ?? '');
+  const [accountId, setAccountId] = useState<number | ''>(initial?.accountId ?? '');
   const [emoji, setEmoji] = useState(initial?.emoji ?? '🎯');
   const [color, setColor] = useState(initial?.color ?? '#16A34A');
   const [deadline, setDeadline] = useState(initial?.deadline ?? '');
@@ -78,7 +78,8 @@ export function GoalForm({
         </Field>
       </div>
       <Field label="Compte concerné">
-        <Select value={accountId} onChange={(e) => setAccountId(Number(e.target.value))}>
+        <Select value={accountId} onChange={(e) => setAccountId(e.target.value ? Number(e.target.value) : '')}>
+          <option value="">Choisir un compte…</option>
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
