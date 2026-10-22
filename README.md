@@ -37,7 +37,23 @@ L'app s'ouvre ensuite en plein écran comme une application native, fonctionne h
 - **Tableau de bord** en bento design : patrimoine total, répartition comptes/liquidités/titres, revenus/dépenses du mois, prochaines échéances, comptes et derniers mouvements.
 - **Mouvements** : ajout de dépenses et d'entrées d'argent, associées à un compte et une catégorie, historique par mois.
 - **Récurrent** : salaire et revenus récurrents, charges fixes, et gestionnaire d'abonnements avec logos/icônes colorés affichés sur un calendrier mensuel au jour de prélèvement (ex. Netflix affiché le 15). Un bouton "marquer comme fait" génère le mouvement du mois dans le compte concerné.
+- **Virements** entre comptes, exclus des totaux revenus/dépenses ; recherche et filtres dans l'historique ; modification d'un mouvement au toucher.
+- **Analyse** : reste à vivre du mois, comparaison avec le mois précédent, dépenses par catégorie avec budgets mensuels, évolution du patrimoine.
+- **Conseils personnalisés** calculés localement (découvert, épargne de précaution, taux d'épargne, budgets, abonnements, diversification, objectifs).
+- **Sauvegarde complète** (.json) restaurable, en plus des exports CSV.
 - **Comptes & Patrimoine** : comptes courants, livrets, comptes-titres et PEA, avec suivi des titres détenus (quantité, prix d'achat, cours actuel, plus/moins-value).
+
+## Cours des actions
+
+Les cours sont récupérés automatiquement (au plus toutes les 30 minutes, ou via **Comptes → Actualiser les cours**) depuis l'API publique d'onvista.de : sans clé ni configuration, appelable directement depuis le navigateur. Le prix retenu est la cotation en euros, de préférence sur Euronext Paris.
+
+Les titres sont identifiés par leur **ISIN**. Dans le formulaire d'un titre, la loupe recherche par nom ou ISIN (« LVMH », « Amundi MSCI World », « FR0010315770 ») ; un titre saisi avec un ISIN dans le champ Ticker est aussi reconnu.
+
+## Tests
+
+```bash
+npm test
+```
 
 ## Icônes / régénérer les icônes PWA
 

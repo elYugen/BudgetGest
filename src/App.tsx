@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { BottomNav } from './components/layout/BottomNav';
 import { Dashboard } from './pages/Dashboard';
 import { Transactions } from './pages/Transactions';
@@ -7,12 +8,25 @@ import { Recurring } from './pages/Recurring';
 import { Accounts } from './pages/Accounts';
 import { Settings } from './pages/Settings';
 import { processRecurringItems } from './lib/autoProcess';
+import { requestPersistentStorage } from './lib/backup';
+import { computeNetWorth, recordSnapshot } from './lib/snapshots';
+import { refreshQuotesIfStale } from './lib/quotes';
 
 export default function App() {
+  const netWorth = useLiveQuery(computeNetWorth, []);
+
   useEffect(() => {
+    if (netWorth !== undefined) recordSnapshot(netWorth);
+  }, [netWorth]);
+
+  useEffect(() => {
+    requestPersistentStorage();
     processRecurringItems();
+    refreshQuotesIfStale();
     const onVisible = () => {
-      if (document.visibilityState === 'visible') processRecurringItems();
+      if (document.visibilityState !== 'visible') return;
+      processRecurringItems();
+      refreshQuotesIfStale();
     };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);

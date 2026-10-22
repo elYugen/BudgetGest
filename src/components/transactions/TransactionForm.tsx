@@ -1,33 +1,44 @@
 import { useState, type FormEvent } from 'react';
-import { db } from '../../db/db';
-import type { Account, TxType } from '../../db/types';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../db/types';
+import type { Account, Transaction, TxType } from '../../db/types';
 import { Field, Input, Select, Button, SegmentedControl } from '../ui/Form';
 import { todayISO, parseAmount } from '../../lib/format';
+import { useCategories } from '../../lib/categories';
+import { addTransaction, addTransfer, updateTransaction } from '../../lib/transactions';
+
+type Mode = TxType | 'transfer';
 
 export function TransactionForm({
   accounts,
   onDone,
   initialType = 'expense',
+  initial,
 }: {
   accounts: Account[];
   onDone: () => void;
   initialType?: TxType;
+  initial?: Transaction;
 }) {
-  const [type, setType] = useState<TxType>(initialType);
-  const [label, setLabel] = useState('');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState(initialType === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0]);
-  const [accountId, setAccountId] = useState<number | ''>(accounts[0]?.id ?? '');
-  const [date, setDate] = useState(todayISO());
+  const editing = !!initial?.id;
+  const [mode, setMode] = useState<Mode>(initial?.type ?? initialType);
+  const [label, setLabel] = useState(initial?.label ?? '');
+  const [amount, setAmount] = useState(initial?.amount?.toString().replace('.', ',') ?? '');
+  const [category, setCategory] = useState(initial?.category ?? '');
+  const [accountId, setAccountId] = useState<number | ''>(initial?.accountId ?? accounts[0]?.id ?? '');
+  const [toAccountId, setToAccountId] = useState<number | ''>(accounts[1]?.id ?? '');
+  const [date, setDate] = useState(initial?.date ?? todayISO());
   const [error, setError] = useState('');
 
-  const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const expenseCategories = useCategories('expense');
+  const incomeCategories = useCategories('income');
+  const categories = mode === 'income' ? incomeCategories : expenseCategories;
+  // Keep a category that was deleted since this transaction was recorded selectable.
+  const categoryOptions = category && !categories.includes(category) ? [category, ...categories] : categories;
+  const selectedCategory = category || categories[0];
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const amt = parseAmount(amount);
-    if (!label.trim()) {
+    if (mode !== 'transfer' && !label.trim()) {
       setError('Merci de renseigner un libellé.');
       return;
     }
@@ -39,23 +50,35 @@ export function TransactionForm({
       setError('Merci de choisir un compte.');
       return;
     }
-    setError('');
-    await db.transaction('rw', db.transactions, db.accounts, async () => {
-      await db.transactions.add({
-        accountId: accountId as number,
-        date,
-        amount: amt,
-        type,
-        category,
-        label: label.trim(),
-      });
-      const acc = await db.accounts.get(accountId as number);
-      if (acc) {
-        await db.accounts.update(acc.id!, {
-          balance: acc.balance + (type === 'income' ? amt : -amt),
-        });
+    if (mode === 'transfer') {
+      if (!toAccountId || toAccountId === accountId) {
+        setError('Merci de choisir deux comptes différents.');
+        return;
       }
-    });
+      setError('');
+      const to = accounts.find((a) => a.id === toAccountId);
+      await addTransfer({
+        fromAccountId: accountId,
+        toAccountId,
+        amount: amt,
+        date,
+        label: label.trim() || `Virement vers ${to?.name ?? 'compte'}`,
+      });
+      onDone();
+      return;
+    }
+    setError('');
+    const payload = {
+      ...(initial?.recurringItemId ? { recurringItemId: initial.recurringItemId } : {}),
+      accountId: accountId as number,
+      date,
+      amount: amt,
+      type: mode,
+      category: selectedCategory,
+      label: label.trim(),
+    };
+    if (initial?.id) await updateTransaction(initial.id, payload);
+    else await addTransaction(payload);
     onDone();
   };
 
@@ -65,21 +88,29 @@ export function TransactionForm({
 
   return (
     <form onSubmit={submit}>
-      <Field label="Type">
-        <SegmentedControl
-          value={type}
-          onChange={(v) => {
-            setType(v);
-            setCategory(v === 'expense' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0]);
-          }}
-          options={[
-            { value: 'expense', label: 'Dépense' },
-            { value: 'income', label: 'Entrée' },
-          ]}
+      {!editing && (
+        <Field label="Type">
+          <SegmentedControl
+            value={mode}
+            onChange={(v) => {
+              setMode(v);
+              setCategory('');
+            }}
+            options={[
+              { value: 'expense', label: 'Dépense' },
+              { value: 'income', label: 'Entrée' },
+              ...(accounts.length > 1 ? [{ value: 'transfer' as const, label: 'Virement' }] : []),
+            ]}
+          />
+        </Field>
+      )}
+      <Field label={mode === 'transfer' ? 'Libellé (facultatif)' : 'Libellé'}>
+        <Input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder={mode === 'transfer' ? 'Ex. Épargne du mois' : 'Ex. Courses Carrefour'}
+          autoFocus={!editing}
         />
-      </Field>
-      <Field label="Libellé">
-        <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ex. Courses Carrefour" autoFocus />
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Montant (€)">
@@ -89,16 +120,18 @@ export function TransactionForm({
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
       </div>
-      <Field label="Catégorie">
-        <Select value={category} onChange={(e) => setCategory(e.target.value)}>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <Field label="Compte">
+      {mode !== 'transfer' && (
+        <Field label="Catégorie">
+          <Select value={selectedCategory} onChange={(e) => setCategory(e.target.value)}>
+            {categoryOptions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
+      <Field label={mode === 'transfer' ? 'Depuis le compte' : 'Compte'}>
         <Select value={accountId} onChange={(e) => setAccountId(Number(e.target.value))}>
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
@@ -107,9 +140,20 @@ export function TransactionForm({
           ))}
         </Select>
       </Field>
+      {mode === 'transfer' && (
+        <Field label="Vers le compte">
+          <Select value={toAccountId} onChange={(e) => setToAccountId(Number(e.target.value))}>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
       {error && <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-3">{error}</p>}
       <Button type="submit" className="w-full mt-2">
-        Ajouter
+        {editing ? 'Enregistrer' : 'Ajouter'}
       </Button>
     </form>
   );

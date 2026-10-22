@@ -28,7 +28,7 @@ export function IconBadge({
     >
       {brand ? (
         <svg viewBox="0 0 24 24" width={size * 0.52} height={size * 0.52} fill={brand.hex} role="img" aria-label={brand.title}>
-          <path d={brand.path} />
+          <path d={brand.path} fillRule={brand.fillRule} />
         </svg>
       ) : LucideIcon ? (
         <LucideIcon size={size * 0.52} color={color} strokeWidth={2.2} />

@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { Sun, Moon, Monitor, Download, Wallet, ArrowLeftRight, CalendarClock, LineChart, HardDrive, RefreshCw } from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
+import { Sun, Moon, Monitor, Download, Upload, Wallet, ArrowLeftRight, CalendarClock, LineChart, HardDrive, RefreshCw, ShieldCheck, Tags, Scale } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { BentoCard, CardLabel } from '../components/ui/BentoCard';
 import { SegmentedControl, Button } from '../components/ui/Form';
@@ -11,10 +11,26 @@ import {
   exportSecuritiesCsv,
   exportAllCsv,
 } from '../lib/exportCsv';
+import { exportBackup, importBackup } from '../lib/backup';
+import { CategoriesSettings } from '../components/settings/CategoriesSettings';
+import { BalanceCheck } from '../components/settings/BalanceCheck';
 
 export function Settings() {
   const { theme, setTheme } = useTheme();
   const [exporting, setExporting] = useState<string | null>(null);
+  const [restoreMessage, setRestoreMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const restore = async (file: File | undefined) => {
+    if (!file) return;
+    if (!confirm('Restaurer cette sauvegarde ? Toutes les données actuelles de cet appareil seront remplacées.')) return;
+    try {
+      await importBackup(file);
+      setRestoreMessage({ ok: true, text: 'Sauvegarde restaurée.' });
+    } catch (e) {
+      setRestoreMessage({ ok: false, text: e instanceof Error ? e.message : 'La restauration a échoué.' });
+    }
+  };
 
   const runExport = async (key: string, fn: () => Promise<void>) => {
     setExporting(key);
@@ -27,7 +43,7 @@ export function Settings() {
 
   return (
     <div>
-      <PageHeader title="Réglages" subtitle="Apparence et export de vos données" />
+      <PageHeader title="Réglages" subtitle="Apparence, catégories, budgets et sauvegarde" />
 
       <BentoCard span="full" className="mb-4">
         <CardLabel>Apparence</CardLabel>
@@ -55,6 +71,47 @@ export function Settings() {
         <Button variant="ghost" className="w-full" onClick={() => window.location.reload()}>
           <RefreshCw size={16} /> Recharger l'app
         </Button>
+      </BentoCard>
+
+      <BentoCard span="full" className="mb-4">
+        <CardLabel icon={<Tags size={13} />}>Catégories & budgets</CardLabel>
+        <CategoriesSettings />
+      </BentoCard>
+
+      <BentoCard span="full" className="mb-4">
+        <CardLabel icon={<Scale size={13} />}>Soldes des comptes</CardLabel>
+        <BalanceCheck />
+      </BentoCard>
+
+      <BentoCard span="full" className="mb-4">
+        <CardLabel icon={<ShieldCheck size={13} />}>Sauvegarde complète</CardLabel>
+        <p className="text-xs text-muted mb-3">
+          Un fichier .json contenant toutes vos données, à conserver en lieu sûr (cloud, e-mail…). Il permet de tout
+          restaurer, sur cet appareil ou un autre.
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <Button className="w-full" onClick={() => runExport('backup', exportBackup)} disabled={exporting !== null}>
+            <Download size={16} /> Sauvegarder
+          </Button>
+          <Button variant="ghost" className="w-full" onClick={() => fileInput.current?.click()}>
+            <Upload size={16} /> Restaurer
+          </Button>
+        </div>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            restore(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+        {restoreMessage && (
+          <p className={`text-sm font-medium mt-3 ${restoreMessage.ok ? 'text-primary-700' : 'text-red-600 dark:text-red-400'}`}>
+            {restoreMessage.text}
+          </p>
+        )}
       </BentoCard>
 
       <BentoCard span="full" className="mb-4">
@@ -99,7 +156,8 @@ export function Settings() {
         <p className="text-sm text-muted leading-relaxed">
           Tout est stocké uniquement sur cet appareil, dans la base locale de votre navigateur (IndexedDB) — rien
           n'est envoyé sur un serveur. L'application fonctionne hors-ligne. Pensez à exporter régulièrement vos
-          données : elles peuvent être perdues si vous videz les données du navigateur ou désinstallez l'app.
+          données avec une sauvegarde complète : elles peuvent être perdues si vous videz les données du navigateur
+          ou désinstallez l'app.
         </p>
       </BentoCard>
     </div>

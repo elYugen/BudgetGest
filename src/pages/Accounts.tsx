@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, Target } from 'lucide-react';
+import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, Target, RefreshCw } from 'lucide-react';
 import { db } from '../db/db';
 import type { Account, Security, Goal } from '../db/types';
 import { ACCOUNT_TYPE_LABELS } from '../db/types';
@@ -16,6 +16,7 @@ import { GoalRow } from '../components/goals/GoalRow';
 import { formatMoney, currentPeriod } from '../lib/format';
 import { accountValue } from '../lib/accountValue';
 import { resolveAccountIcon } from '../lib/accountIcons';
+import { refreshAllQuotes } from '../lib/quotes';
 
 export function Accounts() {
   const accounts = useLiveQuery(() => db.accounts.toArray(), []) ?? [];
@@ -27,6 +28,21 @@ export function Accounts() {
     open: false,
   });
   const [goalSheet, setGoalSheet] = useState<{ open: boolean; editing?: Goal }>({ open: false });
+  const [quotesStatus, setQuotesStatus] = useState<{ busy: boolean; text?: string; error?: boolean }>({ busy: false });
+
+  const lastQuoteUpdate = securities.reduce<string | undefined>(
+    (latest, s) => (s.priceUpdatedAt && (!latest || s.priceUpdatedAt > latest) ? s.priceUpdatedAt : latest),
+    undefined,
+  );
+
+  const refreshQuotes = async () => {
+    setQuotesStatus({ busy: true });
+    const { updated, failed, unidentified } = await refreshAllQuotes();
+    const parts = [`${updated} cours actualisé${updated > 1 ? 's' : ''}.`];
+    if (failed.length) parts.push(`Indisponible : ${failed.join(', ')}.`);
+    if (unidentified.length) parts.push(`À identifier avec la loupe (modifier le titre) : ${unidentified.join(', ')}.`);
+    setQuotesStatus({ busy: false, error: failed.length + unidentified.length > 0, text: parts.join(' ') });
+  };
 
   const banking = accounts.filter((a) => a.type === 'courant' || a.type === 'livret');
   const investing = accounts.filter((a) => a.type === 'compte-titre' || a.type === 'pea');
@@ -150,6 +166,28 @@ export function Accounts() {
       </div>
 
       <SectionTitle>Compte-titres & PEA</SectionTitle>
+      {securities.length > 0 && (
+        <div className="flex items-center justify-between gap-3 mb-3 -mt-1">
+          <p className="text-xs text-muted text-left">
+            {lastQuoteUpdate
+              ? `Cours mis à jour le ${new Date(lastQuoteUpdate).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+              : 'Cours saisis à la main'}
+          </p>
+          <button
+            onClick={refreshQuotes}
+            disabled={quotesStatus.busy}
+            className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold bg-primary-50 text-primary-700 hover:bg-primary-100 disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={quotesStatus.busy ? 'animate-spin' : ''} />
+            {quotesStatus.busy ? 'Actualisation…' : 'Actualiser les cours'}
+          </button>
+        </div>
+      )}
+      {quotesStatus.text && (
+        <p className={`text-xs font-medium mb-3 text-left ${quotesStatus.error ? 'text-red-600 dark:text-red-400' : 'text-primary-700'}`}>
+          {quotesStatus.text}
+        </p>
+      )}
       {investing.length === 0 && (
         <EmptyRow onClick={() => setAccountSheet({ open: true })} label="Ajouter un compte-titres ou un PEA" />
       )}

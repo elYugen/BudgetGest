@@ -5,6 +5,7 @@ import { ACCOUNT_TYPE_COLORS, ACCOUNT_TYPE_ICONS, ACCOUNT_TYPE_LABELS } from '..
 import { Field, Input, Button } from '../ui/Form';
 import { ACCOUNT_ICONS, ACCOUNT_ICON_CHOICES, resolveAccountIcon } from '../../lib/accountIcons';
 import { parseAmount } from '../../lib/format';
+import { openingBalanceFor } from '../../lib/balances';
 
 const TYPES: AccountType[] = ['courant', 'livret', 'compte-titre', 'pea'];
 
@@ -22,10 +23,12 @@ export function AccountForm({ initial, onDone }: { initial?: Account; onDone: ()
       return;
     }
     setError('');
+    const current = balance ? parseAmount(balance) || 0 : 0;
     const payload: Account = {
       name: name.trim(),
       type,
-      balance: balance ? parseAmount(balance) || 0 : 0,
+      balance: current,
+      openingBalance: await openingBalanceFor(initial?.id, current),
       color: ACCOUNT_TYPE_COLORS[type],
       icon,
       createdAt: initial?.createdAt ?? new Date().toISOString(),

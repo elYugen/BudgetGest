@@ -11,6 +11,7 @@ import { MonthCalendar } from '../components/recurring/MonthCalendar';
 import { SubscriptionForm } from '../components/recurring/SubscriptionForm';
 import { ChargeForm } from '../components/recurring/ChargeForm';
 import { formatMoney, clampDayOfMonth, periodLabel } from '../lib/format';
+import { addTransaction, deleteTransaction } from '../lib/transactions';
 
 export function Recurring() {
   const accounts = useLiveQuery(() => db.accounts.toArray(), []) ?? [];
@@ -50,38 +51,19 @@ export function Recurring() {
 
   const togglePaid = async (item: RecurringItem) => {
     const existing = transactions.find((t) => t.recurringItemId === item.id && t.date.startsWith(viewedPeriod));
-    await db.transaction('rw', db.transactions, db.accounts, async () => {
-      if (existing) {
-        await db.transactions.delete(existing.id!);
-        if (item.accountId) {
-          const acc = await db.accounts.get(item.accountId);
-          if (acc) {
-            await db.accounts.update(acc.id!, {
-              balance: acc.balance - (item.kind === 'income' ? existing.amount : -existing.amount),
-            });
-          }
-        }
-      } else {
-        const day = clampDayOfMonth(item.dayOfMonth, viewedYear, viewedMonth);
-        const date = `${viewedPeriod}-${String(day).padStart(2, '0')}`;
-        await db.transactions.add({
-          ...(item.accountId ? { accountId: item.accountId } : {}),
-          date,
-          amount: item.amount,
-          type: item.kind === 'income' ? 'income' : 'expense',
-          category: item.category,
-          label: item.label,
-          recurringItemId: item.id,
-        });
-        if (item.accountId) {
-          const acc = await db.accounts.get(item.accountId);
-          if (acc) {
-            await db.accounts.update(acc.id!, {
-              balance: acc.balance + (item.kind === 'income' ? item.amount : -item.amount),
-            });
-          }
-        }
-      }
+    if (existing) {
+      await deleteTransaction(existing.id!);
+      return;
+    }
+    const day = clampDayOfMonth(item.dayOfMonth, viewedYear, viewedMonth);
+    await addTransaction({
+      ...(item.accountId ? { accountId: item.accountId } : {}),
+      date: `${viewedPeriod}-${String(day).padStart(2, '0')}`,
+      amount: item.amount,
+      type: item.kind === 'income' ? 'income' : 'expense',
+      category: item.category,
+      label: item.label,
+      recurringItemId: item.id,
     });
   };
 

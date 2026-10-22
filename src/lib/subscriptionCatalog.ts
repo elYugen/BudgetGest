@@ -11,8 +11,8 @@ export interface CatalogEntry {
 export const SUBSCRIPTION_CATALOG: CatalogEntry[] = [
   { name: 'Netflix', color: BRAND_LOGOS.netflix.hex, emoji: '🎬', category: 'Streaming', logo: 'netflix' },
   { name: 'Spotify', color: BRAND_LOGOS.spotify.hex, emoji: '🎵', category: 'Musique', logo: 'spotify' },
-  { name: 'Disney+', color: '#113CCF', emoji: '🏰', category: 'Streaming' },
-  { name: 'Amazon Prime', color: '#00A8E1', emoji: '📦', category: 'Streaming' },
+  { name: 'Disney+', color: BRAND_LOGOS.disneyplus.hex, emoji: '🏰', category: 'Streaming', logo: 'disneyplus' },
+  { name: 'Amazon Prime', color: BRAND_LOGOS.amazon.hex, emoji: '📦', category: 'Streaming', logo: 'amazon' },
   { name: 'YouTube Premium', color: BRAND_LOGOS.youtube.hex, emoji: '▶️', category: 'Streaming', logo: 'youtube' },
   { name: 'HBO Max', color: BRAND_LOGOS.hbomax.hex, emoji: '🎬', category: 'Streaming', logo: 'hbomax' },
   { name: 'Crunchyroll', color: BRAND_LOGOS.crunchyroll.hex, emoji: '📺', category: 'Streaming', logo: 'crunchyroll' },

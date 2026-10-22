@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { db } from '../../db/db';
 import type { Account, RecurringItem, RecurringKind } from '../../db/types';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../db/types';
 import { Field, Input, Select, Button } from '../ui/Form';
 import { EMOJI_CHOICES } from '../../lib/subscriptionCatalog';
 import { parseAmount } from '../../lib/format';
 import { processRecurringItems } from '../../lib/autoProcess';
+import { useCategories } from '../../lib/categories';
 
 export function ChargeForm({
   kind,
@@ -18,14 +18,16 @@ export function ChargeForm({
   initial?: RecurringItem;
   onDone: () => void;
 }) {
-  const categories = kind === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const categories = useCategories(kind === 'income' ? 'income' : 'expense');
   const [label, setLabel] = useState(initial?.label ?? (kind === 'income' ? 'Salaire' : ''));
   const [amount, setAmount] = useState(initial?.amount?.toString().replace('.', ',') ?? '');
   const [day, setDay] = useState(initial?.dayOfMonth?.toString() ?? (kind === 'income' ? '28' : '5'));
-  const [category, setCategory] = useState(initial?.category ?? categories[0]);
+  const [category, setCategory] = useState(initial?.category ?? '');
   const [emoji, setEmoji] = useState(initial?.emoji ?? (kind === 'income' ? '💰' : '🧾'));
   const [accountId, setAccountId] = useState<number | ''>(initial?.accountId ?? accounts[0]?.id ?? '');
   const [error, setError] = useState('');
+  const categoryOptions = category && !categories.includes(category) ? [category, ...categories] : categories;
+  const selectedCategory = category || categories[0];
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -49,7 +51,7 @@ export function ChargeForm({
       label: label.trim(),
       amount: amt,
       dayOfMonth: Math.min(Math.max(d, 1), 31),
-      category,
+      category: selectedCategory,
       color: kind === 'income' ? '#16A34A' : '#F97316',
       emoji,
       accountId: accountId ? Number(accountId) : undefined,
@@ -99,8 +101,8 @@ export function ChargeForm({
         </div>
       </Field>
       <Field label="Catégorie">
-        <Select value={category} onChange={(e) => setCategory(e.target.value)}>
-          {categories.map((c) => (
+        <Select value={selectedCategory} onChange={(e) => setCategory(e.target.value)}>
+          {categoryOptions.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>
