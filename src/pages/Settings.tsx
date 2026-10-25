@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { Sun, Moon, Monitor, Download, Upload, Wallet, ArrowLeftRight, CalendarClock, LineChart, HardDrive, RefreshCw, ShieldCheck, Tags, Scale } from 'lucide-react';
+import { Sun, Moon, Monitor, Download, Upload, Wallet, ArrowLeftRight, CalendarClock, LineChart, HardDrive, RefreshCw, ShieldCheck, Tags, Scale, Trash2 } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { BentoCard, CardLabel } from '../components/ui/BentoCard';
 import { SegmentedControl, Button } from '../components/ui/Form';
@@ -11,9 +11,10 @@ import {
   exportSecuritiesCsv,
   exportAllCsv,
 } from '../lib/exportCsv';
-import { exportBackup, importBackup } from '../lib/backup';
+import { exportBackup, importBackup, resetAllData } from '../lib/backup';
 import { CategoriesSettings } from '../components/settings/CategoriesSettings';
 import { BalanceCheck } from '../components/settings/BalanceCheck';
+import { confirmAction } from '../components/ui/ConfirmDialog';
 
 export function Settings() {
   const { theme, setTheme } = useTheme();
@@ -23,13 +24,21 @@ export function Settings() {
 
   const restore = async (file: File | undefined) => {
     if (!file) return;
-    if (!confirm('Restaurer cette sauvegarde ? Toutes les données actuelles de cet appareil seront remplacées.')) return;
+    if (!(await confirmAction('Restaurer cette sauvegarde ? Toutes les données actuelles de cet appareil seront remplacées.', 'Restaurer'))) return;
     try {
       await importBackup(file);
       setRestoreMessage({ ok: true, text: 'Sauvegarde restaurée.' });
     } catch (e) {
       setRestoreMessage({ ok: false, text: e instanceof Error ? e.message : 'La restauration a échoué.' });
     }
+  };
+
+  const [resetDone, setResetDone] = useState(false);
+
+  const reset = async () => {
+    if (!(await confirmAction('Remettre l\'app à zéro ? Comptes, mouvements, récurrents, objectifs, budgets et historique seront définitivement effacés de cet appareil.', 'Tout effacer'))) return;
+    await resetAllData();
+    setResetDone(true);
   };
 
   const runExport = async (key: string, fn: () => Promise<void>) => {
@@ -149,6 +158,18 @@ export function Settings() {
           <Download size={16} />
           {exporting === 'all' ? 'Export en cours…' : 'Tout exporter'}
         </Button>
+      </BentoCard>
+
+      <BentoCard span="full" className="mb-4">
+        <CardLabel icon={<Trash2 size={13} />}>Remise à zéro</CardLabel>
+        <p className="text-xs text-muted mb-3">
+          Efface toutes les données de cet appareil et repart d'une app vierge. Faites une sauvegarde complète avant si
+          vous voulez pouvoir revenir en arrière.
+        </p>
+        <Button variant="danger" className="w-full" onClick={reset}>
+          <Trash2 size={16} /> Remettre l'app à zéro
+        </Button>
+        {resetDone && <p className="text-sm font-medium mt-3 text-primary-700">Toutes les données ont été effacées.</p>}
       </BentoCard>
 
       <BentoCard span="full">

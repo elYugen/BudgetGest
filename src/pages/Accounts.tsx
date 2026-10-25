@@ -17,6 +17,7 @@ import { formatMoney, currentPeriod } from '../lib/format';
 import { accountValue } from '../lib/accountValue';
 import { resolveAccountIcon } from '../lib/accountIcons';
 import { refreshAllQuotes } from '../lib/quotes';
+import { confirmAction } from '../components/ui/ConfirmDialog';
 
 export function Accounts() {
   const accounts = useLiveQuery(() => db.accounts.toArray(), []) ?? [];
@@ -53,24 +54,28 @@ export function Accounts() {
   const patrimoine = totalBanking + totalCash + totalSecurities;
 
   const deleteAccount = async (id: number) => {
-    if (!confirm('Supprimer ce compte et ses données associées ?')) return;
+    if (!(await confirmAction('Supprimer ce compte et ses données associées ?'))) return;
     await db.transaction('rw', db.accounts, db.securities, db.transactions, db.recurringItems, db.goals, async () => {
       await db.accounts.delete(id);
       await db.securities.where('accountId').equals(id).delete();
       await db.transactions.where('accountId').equals(id).delete();
       await db.goals.where('accountId').equals(id).delete();
-      const items = await db.recurringItems.where('accountId').equals(id).toArray();
-      await Promise.all(items.map((i) => db.recurringItems.update(i.id!, { accountId: undefined })));
+      // recurringItems has no accountId index, so where('accountId') would throw and abort the deletion.
+      await db.recurringItems
+        .filter((i) => i.accountId === id)
+        .modify((i) => {
+          delete i.accountId;
+        });
     });
   };
 
   const deleteSecurity = async (id: number) => {
-    if (!confirm('Supprimer ce titre ?')) return;
+    if (!(await confirmAction('Supprimer ce titre ?'))) return;
     await db.securities.delete(id);
   };
 
   const deleteGoal = async (id: number) => {
-    if (!confirm('Supprimer cet objectif ?')) return;
+    if (!(await confirmAction('Supprimer cet objectif ?'))) return;
     await db.goals.delete(id);
   };
 

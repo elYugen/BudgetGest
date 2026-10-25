@@ -12,6 +12,7 @@ import { SubscriptionForm } from '../components/recurring/SubscriptionForm';
 import { ChargeForm } from '../components/recurring/ChargeForm';
 import { formatMoney, clampDayOfMonth, periodLabel } from '../lib/format';
 import { addTransaction, deleteTransaction } from '../lib/transactions';
+import { confirmAction } from '../components/ui/ConfirmDialog';
 
 export function Recurring() {
   const accounts = useLiveQuery(() => db.accounts.toArray(), []) ?? [];
@@ -68,7 +69,7 @@ export function Recurring() {
   };
 
   const remove = async (item: RecurringItem) => {
-    if (!confirm(`Supprimer "${item.label}" ?`)) return;
+    if (!(await confirmAction(`Supprimer "${item.label}" ?`))) return;
     await db.recurringItems.delete(item.id!);
   };
 

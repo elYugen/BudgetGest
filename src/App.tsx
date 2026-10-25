@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { BottomNav } from './components/layout/BottomNav';
+import { ConfirmHost } from './components/ui/ConfirmDialog';
 import { Dashboard } from './pages/Dashboard';
 import { Transactions } from './pages/Transactions';
 import { Recurring } from './pages/Recurring';
@@ -49,6 +50,7 @@ export default function App() {
           </Routes>
         </div>
         <BottomNav />
+        <ConfirmHost />
       </div>
     </HashRouter>
   );

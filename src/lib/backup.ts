@@ -1,4 +1,4 @@
-import { db } from '../db/db';
+import { db, DEFAULT_CATEGORIES } from '../db/db';
 import { todayISO } from './format';
 import { ensureOpeningBalances } from './balances';
 
@@ -56,6 +56,14 @@ export async function importBackup(file: File): Promise<void> {
   });
   // Backups made before opening balances existed.
   await ensureOpeningBalances();
+}
+
+// Erases every table and restores the default categories, as on a fresh install.
+export async function resetAllData(): Promise<void> {
+  await db.transaction('rw', TABLES.map((n) => db.table(n)), async () => {
+    for (const name of TABLES) await db.table(name).clear();
+    await db.categories.bulkAdd(DEFAULT_CATEGORIES);
+  });
 }
 
 // Asks the browser not to evict IndexedDB under storage pressure. Granted silently for

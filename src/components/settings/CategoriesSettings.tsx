@@ -6,6 +6,7 @@ import type { TxType } from '../../db/types';
 import { Input, Button, SegmentedControl } from '../ui/Form';
 import { addCategory, deleteCategory, setBudget } from '../../lib/categories';
 import { parseAmount } from '../../lib/format';
+import { confirmAction } from '../ui/ConfirmDialog';
 
 // Lists categories of one type; expense categories also get a monthly budget field.
 export function CategoriesSettings() {
@@ -23,7 +24,7 @@ export function CategoriesSettings() {
   };
 
   const remove = async (id: number, catName: string) => {
-    if (!confirm(`Supprimer la catégorie "${catName}" ? Les mouvements existants la conservent.`)) return;
+    if (!(await confirmAction(`Supprimer la catégorie "${catName}" ? Les mouvements existants la conservent.`))) return;
     await deleteCategory(id);
   };
 

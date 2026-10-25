@@ -11,6 +11,7 @@ import { TransactionForm } from '../components/transactions/TransactionForm';
 import { formatMoney, formatDateLong, periodLabel } from '../lib/format';
 import { deleteTransaction, isTransfer } from '../lib/transactions';
 import { monthTotals } from '../lib/stats';
+import { confirmAction } from '../components/ui/ConfirmDialog';
 
 const NO_TRANSACTIONS: Transaction[] = [];
 
@@ -67,7 +68,7 @@ export function Transactions() {
 
   const remove = async (t: Transaction) => {
     const msg = isTransfer(t) ? 'Supprimer ce virement (sur les deux comptes) ?' : `Supprimer "${t.label}" ?`;
-    if (!confirm(msg)) return;
+    if (!(await confirmAction(msg))) return;
     await deleteTransaction(t.id!);
   };
 
